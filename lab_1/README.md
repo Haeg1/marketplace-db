@@ -1,159 +1,182 @@
-Отчёт по лабораторной работе №1
-Дисциплина: Математические основы баз данных
-Тема: Проектирование реляционной схемы базы данных для маркетплейса
+# Отчёт по лабораторной работе №1
+**Дисциплина:** Математические основы баз данных
+**Тема:** Проектирование реляционной схемы базы данных для маркетплейса
 
-1. Цель работы
-Освоение теоретических основ проектирования реляционных баз данных, изучение принципов нормализации отношений до третьей нормальной формы (3НФ), разработка концептуальной и логической схемы базы данных для предметной области «Маркетплейс» и её физическая реализация в СУБД PostgreSQL.
+---
 
-2. Описание предметной области
-Предметная область — электронная торговая площадка (маркетплейс), объединяющая покупателей и продавцов. Система должна обеспечивать выполнение следующих функций:
+## 1. Цель работы
 
-регистрация и управление пользователями с разными ролями (покупатели, продавцы);
+Изучение теоретических основ проектирования реляционных баз данных, освоение принципов нормализации отношений до 3-й нормальной формы (3НФ), разработка концептуальной и логической схемы базы данных для предметной области «Маркетплейс» и её физическая реализация в СУБД PostgreSQL.
 
-ведение каталога товаров с распределением по категориям;
+---
 
-управление профилями магазинов (продавцов);
+## 2. Описание предметной области
 
-формирование корзины товаров для покупателей;
+Предметная область — электронная торговая площадка (маркетплейс), связывающая покупателей и продавцов. Система должна обеспечивать выполнение следующих функций:
 
-оформление и обработка заказов с учётом позиций заказа;
+* Управление пользователями и их ролями (покупатели, продавцы);
+* Ведение каталога товаров, распределенных по категориям;
+* Управление профилями магазинов (продавцов);
+* Организация корзины товаров для покупателей;
+* Оформление и обработка заказов, а также учет позиций заказа;
+* Фиксация платежей и статусов доставки;
+* Учет остатков товаров на складе;
+* Сбор отзывов и оценок покупателей на товары.
 
-фиксация платежей и статусов доставки;
+---
 
-учёт остатков товаров на складе;
+## 3. Логическое проектирование и нормализация (3НФ)
 
-сбор отзывов и оценок покупателей на товары.
+В результате анализа предметной области выделено **13 сущностей**. Схема базы данных приведена к третьей нормальной форме (3НФ):
 
-3. Логическое проектирование и нормализация (3НФ)
-В результате анализа предметной области выделено 13 сущностей. Схема базы данных приведена к третьей нормальной форме (3НФ):
+1. **1НФ:** Все атрибуты атомарны, у таблиц определены первичные ключи.
+2. **2НФ:** Все неключевые атрибуты функционально полно зависят от первичного ключа. Связи «многие-ко-многим» (товары в заказах и корзинах) развязаны через промежуточные таблицы (`order_items`, `cart_items`).
+3. **3НФ:** Транзитивные зависимости между неключевыми атрибутами отсутствуют.
 
-1НФ: Все атрибуты атомарны, у каждой таблицы определён первичный ключ.
+### Список таблиц и их назначение
 
-2НФ: Все неключевые атрибуты функционально полно зависят от первичного ключа. Связи «многие-ко-многим» (товары в заказах и корзинах) развязаны через промежуточные таблицы (order_items, cart_items).
+* `users` — учетные записи пользователей системы;
+* `sellers` — профили продавцов/магазинов (связь 1:1 с `users`, `UNIQUE(user_id)`);
+* `addresses` — адреса доставки пользователей;
+* `categories` — плоский справочник категорий товаров;
+* `products` — каталог товаров;
+* `stock` — учет количества товара на складе (связь 1:1 с `products`, PK по `product_id`);
+* `carts` — корзины покупателей (связь 1:1 с `users`, `UNIQUE(user_id)`);
+* `cart_items` — товары в корзине (N:M между `carts` и `products`, PK `(cart_id, product_id)`);
+* `orders` — оформленные заказы;
+* `order_items` — состав заказа с фиксацией цены на момент покупки (`unit_price`, PK `(order_id, product_id)`);
+* `payments` — данные об оплате заказов (связь 1:1 с `orders`, `UNIQUE(order_id)`);
+* `deliveries` — сведения о доставке заказов (связь 1:1 с `orders`, `UNIQUE(order_id)`, привязка к `addresses`);
+* `reviews` — отзывы покупателей на товары (один отзыв пользователя на товар, `UNIQUE(user_id, product_id)`).
 
-3НФ: Транзитивные зависимости между неключевыми атрибутами отсутствуют.
+---
 
-Список таблиц и их назначение
-users — учётные записи пользователей системы;
+## 4. ER-диаграмма
 
-sellers — профили продавцов/магазинов (связь 1:1 с users, UNIQUE(user_id));
-
-addresses — адреса доставки пользователей;
-
-categories — плоский справочник категорий товаров;
-
-products — каталог товаров;
-
-stock — учёт количества товара на складе (связь 1:1 с products, PK по product_id);
-
-carts — корзины покупателей (связь 1:1 с users, UNIQUE(user_id));
-
-cart_items — товары в корзине (N:M между carts и products, PK (cart_id, product_id));
-
-orders — оформленные заказы;
-
-order_items — состав заказа с фиксацией цены на момент покупки (unit_price, PK (order_id, product_id));
-
-payments — данные об оплате заказов (связь 1:1 с orders, UNIQUE(order_id));
-
-deliveries — сведения о доставке заказов (связь 1:1 с orders, UNIQUE(order_id), привязка к addresses);
-
-reviews — отзывы покупателей на товары (один отзыв пользователя на товар, UNIQUE(user_id, product_id)).
-
-4. ER-диаграмма
 Физическая схема базы данных, сгенерированная в pgAdmin 4:
 
-![alt text](image.png)
+![ER-диаграмма базы данных](er_diagram.png)
 
+---
 
-5. Физическая реализация (DDL-скрипт)
-База данных реализована в PostgreSQL 18.6. Полный скрипт — в файле 01_schema.sql: транзакционный (BEGIN; ... END;), идемпотентный (CREATE TABLE IF NOT EXISTS, ALTER TABLE IF EXISTS), PK на bigserial, деньги — numeric(12,2), целостность — FOREIGN KEY. Ниже — ключевые фрагменты из реального скрипта:
+## 5. Физическая реализация (DDL-скрипт)
 
-sql
--- Таблица пользователей
-CREATE TABLE IF NOT EXISTS public.users
-(
-    id bigserial NOT NULL,
-    full_name character varying(255) NOT NULL,
-    email character varying(255) NOT NULL,
-    phone character varying(30),
-    role character varying(20) NOT NULL DEFAULT 'customer',
-    created_at timestamp with time zone NOT NULL DEFAULT now(),
-    CONSTRAINT users_pkey PRIMARY KEY (id),
-    CONSTRAINT users_email_key UNIQUE (email),
-    CONSTRAINT users_phone_key UNIQUE (phone)
+База данных реализована в **PostgreSQL 18.6**. Полный скрипт — в файле [`01_schema.sql`](./01_schema.sql): транзакционный (`BEGIN; ... END;`), идемпотентный (`CREATE TABLE IF NOT EXISTS`, `ALTER TABLE IF EXISTS`), PK на `bigserial`, деньги — `numeric(12,2)`, целостность — `FOREIGN KEY`. Ниже — ключевые фрагменты из реального скрипта:
+
+```sql
+CREATE TABLE users (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    full_name VARCHAR(255) NOT NULL,
+    email VARCHAR(255) NOT NULL UNIQUE,
+    phone VARCHAR(20),
+    role VARCHAR(20) NOT NULL DEFAULT 'customer', 
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
 
--- Таблица продавцов (1:1 с users)
-CREATE TABLE IF NOT EXISTS public.sellers
-(
-    id bigserial NOT NULL,
-    user_id bigint NOT NULL,
-    store_name character varying(255) NOT NULL,
-    description text NOT NULL,
-    created_at timestamp with time zone NOT NULL DEFAULT now(),
-    CONSTRAINT sellers_pkey PRIMARY KEY (id),
-    CONSTRAINT sellers_store_name_key UNIQUE (store_name),
-    CONSTRAINT user_id_unique UNIQUE (user_id)
+CREATE TABLE sellers (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    user_id BIGINT NOT NULL UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+    store_name VARCHAR(255) NOT NULL,
+    description TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
 
--- Таблица категорий (плоский справочник)
-CREATE TABLE IF NOT EXISTS public.categories
-(
-    id bigserial NOT NULL,
-    name character varying(255) NOT NULL,
-    CONSTRAINT categories_pkey PRIMARY KEY (id),
-    CONSTRAINT categories_name_key UNIQUE (name)
+CREATE TABLE categories (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    parent_id BIGINT REFERENCES categories(id) ON DELETE RESTRICT,
+    name VARCHAR(255) NOT NULL UNIQUE
 );
 
--- Таблица товаров
-CREATE TABLE IF NOT EXISTS public.products
-(
-    id bigserial NOT NULL,
-    seller_id bigint NOT NULL,
-    category_id bigint NOT NULL,
-    title character varying(255) NOT NULL,
-    description text NOT NULL,
-    price numeric(12, 2) NOT NULL,
-    is_active boolean DEFAULT true,
-    created_at timestamp with time zone NOT NULL DEFAULT now(),
-    CONSTRAINT products_pkey PRIMARY KEY (id)
+CREATE TABLE products (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    seller_id BIGINT NOT NULL REFERENCES sellers(id) ON DELETE RESTRICT,
+    category_id BIGINT NOT NULL REFERENCES categories(id) ON DELETE RESTRICT,
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    price NUMERIC(12, 2) NOT NULL CHECK (price > 0),
+    is_active BOOLEAN NOT NULL DEFAULT TRUE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
 
--- Таблица остатков на складе (1:1 с products)
-CREATE TABLE IF NOT EXISTS public.stock
-(
-    product_id bigint NOT NULL,
-    quantity integer NOT NULL,
-    updated_at timestamp with time zone NOT NULL DEFAULT now(),
-    CONSTRAINT stock_pkey PRIMARY KEY (product_id)
+CREATE TABLE stock (
+    product_id BIGINT PRIMARY KEY REFERENCES products(id) ON DELETE CASCADE,
+    quantity INTEGER NOT NULL DEFAULT 0 CHECK (quantity >= 0),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
 
--- Таблица заказов
-CREATE TABLE IF NOT EXISTS public.orders
-(
-    id bigserial NOT NULL,
-    user_id bigint NOT NULL,
-    status character varying(30) NOT NULL DEFAULT 'created',
-    total_amount numeric(12, 2) NOT NULL DEFAULT 0.00,
-    created_at timestamp with time zone NOT NULL DEFAULT now(),
-    CONSTRAINT orders_pkey PRIMARY KEY (id)
+CREATE TABLE carts (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
 );
 
--- Позиции в заказе (с фиксацией цены покупки)
-CREATE TABLE IF NOT EXISTS public.order_items
-(
-    order_id bigint NOT NULL,
-    product_id bigint NOT NULL,
-    quantity integer NOT NULL,
-    unit_price numeric(12, 2) NOT NULL,
-    CONSTRAINT order_items_pkey PRIMARY KEY (order_id, product_id)
+CREATE TABLE cart_items (
+    cart_id BIGINT NOT NULL REFERENCES carts(id) ON DELETE CASCADE,
+    product_id BIGINT NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+    quantity INTEGER NOT NULL CHECK (quantity > 0),
+    PRIMARY KEY (cart_id, product_id)
 );
-Остальные таблицы (addresses, carts, cart_items, payments, deliveries, reviews) и все внешние ключи (ON DELETE CASCADE / RESTRICT / NO ACTION — см. ALTER TABLE ... ADD CONSTRAINT в конце скрипта) — в полном файле 01_schema.sql.
+
+CREATE TABLE orders (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE RESTRICT,
+    status VARCHAR(50) NOT NULL DEFAULT 'created',
+    total_amount NUMERIC(12, 2) NOT NULL DEFAULT 0,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+);
+
+CREATE TABLE order_items (
+    order_id BIGINT NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+    product_id BIGINT NOT NULL REFERENCES products(id) ON DELETE RESTRICT,
+    quantity INTEGER NOT NULL CHECK (quantity > 0),
+    unit_price NUMERIC(12, 2) NOT NULL CHECK (unit_price > 0),
+    PRIMARY KEY (order_id, product_id)
+);
+
+CREATE TABLE payments (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    order_id BIGINT NOT NULL UNIQUE REFERENCES orders(id) ON DELETE CASCADE,
+    amount NUMERIC(12, 2) NOT NULL CHECK (amount > 0),
+    status VARCHAR(50) NOT NULL DEFAULT 'pending',
+    paid_at TIMESTAMP WITH TIME ZONE
+);
+
+CREATE TABLE reviews (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    product_id BIGINT NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+    score INTEGER NOT NULL CHECK (score BETWEEN 1 AND 5),
+    comment TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+);
+
+CREATE TABLE addresses (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    city VARCHAR(100) NOT NULL,
+    street VARCHAR(255) NOT NULL,
+    house VARCHAR(50) NOT NULL,
+    apartment VARCHAR(50)
+);
+CREATE TABLE deliveries (
+    id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    order_id BIGINT NOT NULL UNIQUE REFERENCES orders(id) ON DELETE CASCADE,
+    address_id BIGINT NOT NULL REFERENCES addresses(id) ON DELETE RESTRICT,
+    delivery_status VARCHAR(50) NOT NULL DEFAULT 'pending',
+    delivery_date TIMESTAMP WITH TIME ZONE
+);
+```
+
+Остальные таблицы (`addresses`, `carts`, `cart_items`, `payments`, `deliveries`, `reviews`) и все внешние ключи (`ON DELETE CASCADE / RESTRICT / NO ACTION` — см. `ALTER TABLE ... ADD CONSTRAINT` в конце скрипта) — в полном файле [`01_schema.sql`](./01_schema.sql).
 
 Запуск:
-bash
-psql -U postgres -d marketplace -f lab_1/01_schema.sql
-6. Вывод
-В ходе выполнения лабораторной работы №1 была полностью спроектирована реляционная база данных для маркетплейса. Построены концептуальная, логическая и физическая модели данных, проведена нормализация до 3НФ, а также сформирован и успешно выполнен DDL-скрипт создания структуры в PostgreSQL.
 
+```bash
+psql -U postgres -d marketplace -f lab_1/01_schema.sql
+```
+
+---
+
+## 6. Вывод
+
+В ходе выполнения лабораторной работы №1 была полностью спроектирована реляционная база данных для маркетплейса. Были построены концептуальная, логическая и физическая модели данных, проведена нормализация до 3НФ, а также сформирован и успешно выполнен DDL-скрипт создания структуры в PostgreSQL.
